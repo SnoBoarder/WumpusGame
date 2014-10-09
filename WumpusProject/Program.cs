@@ -55,7 +55,7 @@ namespace WumpusProject
                 {
                     _gridSet = true;
 
-                    Console.WriteLine("Welcome to the Wumpus Game! Please set the board size?:");
+                    Console.WriteLine("Welcome to the Wumpus Game! Please set the board size (row,col i.e. \"5,5\" for a 5 by 5 board):");
                     Console.Write("Input:");
                     choice = Console.ReadLine();
 
@@ -91,7 +91,7 @@ namespace WumpusProject
         // Consider additional static functions for unit testing
         private static void populateTest(List<string> test)
         {
-            test.Add("5"); // grid size
+            test.Add("5,5"); // grid size
             test.Add("0,0,E");
             test.Add("0,1,B");
             test.Add("0,2,P");

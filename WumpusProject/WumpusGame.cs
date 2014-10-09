@@ -16,10 +16,11 @@ namespace WumpusProject
 
         public static bool wumpusFound = false;
 
-        public static int size;
+        public static int boardRows;
+        public static int boardCols;
 
         public static PerfectNode[,] perfectMap;
-        public static List<List<Node>> currentMap; // TODO: Although it's a double list, I suggest we set it up like perfect node where it's a double array for simplicity
+        public static Node[,] playerMap; // TODO: Although it's a double list, I suggest we set it up like perfect node where it's a double array for simplicity
 
         private int _startRow = -1;
         private int _startCol = -1;
@@ -40,19 +41,24 @@ namespace WumpusProject
             _runningSetup = true;
 
             // NOTE: Currently assumes a square grid
-            size = Int32.Parse(choice);
+            string[] choices = choice.Split(',');
+            boardRows = Convert.ToInt32(choices[0]);
+            boardCols = Convert.ToInt32(choices[1]);
 
-            perfectMap = new PerfectNode[size, size];
+            perfectMap = new PerfectNode[boardRows, boardCols];
+            playerMap = new Node[boardRows, boardCols];
 
-            for (int row = 0; row < size; row++)
+            for (int row = 0; row < boardRows; row++)
             {
-                for (int col = 0; col < size; col++)
+                for (int col = 0; col < boardCols; col++)
                 {
                     perfectMap[row, col] = new PerfectNode();
+                    playerMap[row, col] = null; // initialize to null so that we can populate anything at any point
                 }
             }
 
-            return "\n\tGrid size is " + size + "\n";
+
+            return "\n\tGrid size is " + boardRows + " by " + boardCols + "\n";
         }
 
         public string AddAttributes(string choice)

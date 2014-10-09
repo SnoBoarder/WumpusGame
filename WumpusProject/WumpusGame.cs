@@ -14,7 +14,10 @@ namespace WumpusProject
 
         private static bool _runningSetup; // make sure no one manipulates PerfectNodes after setup
 
+        public static bool goHome = false;
         public static bool wumpusFound = false;
+        public static bool wumpusKilled = false;
+        public static bool goldFound = false;
 
         public static int boardRows;
         public static int boardCols;
@@ -25,10 +28,23 @@ namespace WumpusProject
         private int _startRow = -1;
         private int _startCol = -1;
 
+        private int _currRow;
+        private int _currCol;
+
+        // TODO: see if this is needed
+        private int _wumpusRow = -1;
+        private int _wumpusCol = -1;
+
         public WumpusGame()
         {
             // reset static variables
+            goHome = false;
             wumpusFound = false;
+            wumpusKilled = false;
+            goldFound = false;
+
+            _wumpusRow = -1;
+            _wumpusCol = -1;
         }
         
         public static bool runningSetup
@@ -53,7 +69,7 @@ namespace WumpusProject
                 for (int col = 0; col < boardCols; col++)
                 {
                     perfectMap[row, col] = new PerfectNode();
-                    playerMap[row, col] = null; // initialize to null so that we can populate anything at any point
+                    playerMap[row, col] = new Node(row, col); // initialize to null so that we can populate anything at any point
                 }
             }
 
@@ -85,6 +101,10 @@ namespace WumpusProject
                     case START_LOCATION:
                         _startRow = row;
                         _startCol = col;
+
+                        _currRow = _startRow;
+                        _currCol = _startCol;
+                        
                         retVal += "Player will enter at: (" + _startRow + "," + _startCol + ")\n";
                         break;
                     case WUMPUS:
@@ -132,8 +152,18 @@ namespace WumpusProject
             // the board is valid, it may be overkill in terms of this project.
 
             Console.WriteLine("~~NOW SOLVING WUMPUS GAME~~");
-            
+
+            Node currentNode;
+
+            Node potentialNode;
+
             // TODO: SETUP AND RUN ALGORITHM HERE
+//            while (true)
+//            {
+//                // get information about the current node from the perfect node
+//                currentNode = playerMap[_currRow, _currCol];
+//                currentNode.updateFromPerfectNode(perfectMap[_currRow, _currCol]);
+//            }
         }
     }
 }

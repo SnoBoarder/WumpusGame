@@ -4,114 +4,206 @@ namespace WumpusProject
 {
     public class Node
     {
-        private const int POTENTIAL_PIT = 0;
-        private const int POTENTIAL_WUMPUS = 1;
+        public delegate void HandleSafetyPitCheck(Node node);
+        public static event HandleSafetyPitCheck OnSafetyPitCheck;
 
-        private bool _potentialPit = false;
-        
+        public delegate void HandleSafetyWumpusCheck(Node node);
+        public static event HandleSafetyWumpusCheck OnSafetyWumpusCheck;
+
+        private enum PitState { UNKNOWN, POTENTIAL_PIT, NO_PIT, PIT_HERE };
+        private enum WumpusState { UNKNOWN, POTENTIAL_WUMPUS, NO_WUMPUS, WUMPUS_HERE };
+        enum PotentialType { PIT, WUMPUS };
+
+        private PitState _pitState = PitState.UNKNOWN;
+        private WumpusState _wumpusState = WumpusState.UNKNOWN;
+
         private int _row;
         private int _col;
-        private bool _visitedNode = false;
-        private int _wumpusCount;
 
-        private PerfectNode _pNode;
+        private PerfectNode _perfectNode;
 
         public Node(int row, int col)
         {
             _row = row;
             _col = col;
         }
-
-        public bool visitedNode
+        
+        public int row
         {
-            get { return _visitedNode; }
+            get { return _row; }
         }
 
-        public bool potentialPit
+        public int col
         {
-            get { return _potentialPit; }
-
-            set
-            {
-                if (_visitedNode)
-                    return; // we already know what this node is (and because we know, it definitely shouldn't be a pit!)
-
-                _potentialPit = value;
-            }
+            get { return _col; }
         }
 
-        // probably don't need this...
-        public bool isWumpus
+        public bool visited
         {
-            get { return _wumpusCount == 2; }
+            get { return _perfectNode != null; }
         }
 
-        public int wumpusCount
+        public PerfectNode perfectNode
         {
-            set
-            {
-                if (WumpusGame.wumpusFound)
-                    return; // we've already found the wumpus. ignore.
-
-                _wumpusCount = value;
-                if (_wumpusCount == 2)
-                { // WE HAVE A WUMPUS!
-                    // TODO: tell the game that THIS node row/col has a wumpus (may not be needed?)
-
-                    // Set static bool that the wumpus has been found
-                    WumpusGame.wumpusFound = true;
-                }
-            }
+            get { return _perfectNode; }
         }
 
-        public void updateFromPerfectNode(PerfectNode pNode)
+        public bool isSafe
         {
-            if (_visitedNode)
-                return; // we've already visited this node. ignore updating
-
-            _visitedNode = true;
-
-            // TODO: Discuss if the perfect node needs to be stored
-            _pNode = pNode;
-
-            if (_pNode.isBreezy)
-            { // notify adjacent nodes that they could be potential pits
-                setAdjacentNodesWith(POTENTIAL_PIT);
-            }
-
-            if (_pNode.isPit)
-            { // player falls into a pit... player loses 1000 points...
-
-            }
-
-            if (_pNode.isWumpus)
-            { // player is killed by the wumpus... player loses 1000 points...
-
-            }
-
-            if (_pNode.isStench)
-            { // notify adjacent nodes that their wumpusCount needs to increase
-                setAdjacentNodesWith(POTENTIAL_WUMPUS);
-            }
-
-            if (_pNode.hasGold)
-            { // WE GOT GOLD
-                WumpusGame.goldFound = true;
-            }
+            get { return _pitState == PitState.NO_PIT && _wumpusState == WumpusState.NO_WUMPUS; }
         }
 
-        private void setAdjacentNodesWith(int type)
+        public void handlePotentialPit()
         {
-            // go through all adjacent nodes and set their information
+            int neighborCount = 0;
+            int breezyCount = 0;
+
+            Node neighbor = null;
 
             for (int row = _row - 1; row <= _row + 1; row++)
             {
                 for (int col = _col - 1; col <= _col + 1; col++)
                 {
-                    if (row < 0 || row >= WumpusGame.boardRows)
+                    if (row < 0 || row >= WumpusGame.totalRows)
                         continue; // row not within bounds. ignore.
 
-                    if (col < 0 || col >= WumpusGame.boardCols)
+                    if (col < 0 || col >= WumpusGame.totalCols)
+                        continue; // column not within bounds. ignore.
+
+                    if (row == _row || col == _col)
+                        continue; // ignore self
+
+                    neighbor = WumpusGame.playerMap[row, col];
+
+                    if (neighbor.visited)
+                    {
+                        neighborCount++;
+
+                        if (neighbor.perfectNode.isBreezy)
+                            breezyCount++;
+                    }
+                }
+            }
+
+            if (neighborCount == 1)
+            { // i am the only one with breeze
+                _pitState = PitState.POTENTIAL_PIT;
+            }
+            else if (breezyCount > 1)
+            {
+                _pitState = PitState.PIT_HERE;
+
+                // TODO: Tell someone that there is a pit here? Not sure if we really need to tell anyone...
+            }
+            else
+            {
+                _pitState = PitState.NO_PIT;
+
+                if (OnSafetyPitCheck != null)
+                    OnSafetyPitCheck(this); // dispatch event to make the wumpus game check the safety of this node again
+            }
+        }
+
+        public void handlePotentialWumpus()
+        {
+            int neighborCount = 0;
+            int stenchCount = 0;
+
+            Node neighbor = null;
+
+            for (int row = _row - 1; row <= _row + 1; row++)
+            {
+                for (int col = _col - 1; col <= _col + 1; col++)
+                {
+                    if (row < 0 || row >= WumpusGame.totalRows)
+                        continue; // row not within bounds. ignore.
+
+                    if (col < 0 || col >= WumpusGame.totalCols)
+                        continue; // column not within bounds. ignore.
+
+                    if (row == _row || col == _col)
+                        continue; // ignore self
+
+                    neighbor = WumpusGame.playerMap[row, col];
+
+                    if (neighbor.visited)
+                    {
+                        neighborCount++;
+
+                        if (neighbor.perfectNode.isStench)
+                            stenchCount++;
+                    }
+                }
+            }
+
+            if (neighborCount == 1)
+            { // i am the only neighbor with stench
+                _wumpusState = WumpusState.POTENTIAL_WUMPUS;
+
+                // add to list of potential wumpus nodes
+                WumpusGame.potentialWumpusNodes.Add(this);
+            }
+            else if (stenchCount > 1)
+            {
+                _wumpusState = WumpusState.WUMPUS_HERE;
+
+                // tell the main game that the wumpus's location!
+                WumpusGame.setWumpusPosition(_row, _col);
+                WumpusGame.potentialWumpusNodes.Clear();
+            }
+            else
+            {
+                _wumpusState = WumpusState.NO_WUMPUS;
+
+                if (OnSafetyWumpusCheck != null)
+                    OnSafetyWumpusCheck(this); // dispatch event to make the wumpus game check the safety of this node again
+            }
+        }
+
+        public void updateFromPerfectNode(PerfectNode perfectNode)
+        {
+            if (_perfectNode != null)
+                return; // we've already visited this node. ignore updating
+
+            _perfectNode = perfectNode;
+
+            if (_perfectNode.isBreezy)
+            { // notify adjacent nodes that they could be potential pits
+                updateAdjacentNodesWith(PotentialType.PIT);
+            }
+
+            if (_perfectNode.isPit)
+            { // player falls into a pit... player loses 1000 points...
+                throw new Exception("YOU FELL INTO A PIT");
+            }
+
+            if (_perfectNode.isWumpus)
+            { // player is killed by the wumpus... player loses 1000 points...
+                throw new Exception("YOU WALKED INTO A WUMPUS");
+            }
+
+            if (_perfectNode.isStench)
+            { // notify adjacent nodes that their wumpusCount needs to increase
+                updateAdjacentNodesWith(PotentialType.WUMPUS);
+            }
+
+            if (_perfectNode.hasGold)
+            { // WE GOT GOLD
+                WumpusGame.goldFound = true;
+            }
+        }
+
+        private void updateAdjacentNodesWith(PotentialType type)
+        {
+            // go through all adjacent nodes and set their information
+            for (int row = _row - 1; row <= _row + 1; row++)
+            {
+                for (int col = _col - 1; col <= _col + 1; col++)
+                {
+                    if (row < 0 || row >= WumpusGame.totalRows)
+                        continue; // row not within bounds. ignore.
+
+                    if (col < 0 || col >= WumpusGame.totalCols)
                         continue; // column not within bounds. ignore.
 
                     if (row == _row || col == _col)
@@ -119,11 +211,11 @@ namespace WumpusProject
 
                     switch (type)
                     {
-                        case POTENTIAL_PIT:
-                            WumpusGame.playerMap[row, col].potentialPit = true;
+                        case PotentialType.PIT:
+                            WumpusGame.playerMap[row, col].handlePotentialPit();
                             break;
-                        case POTENTIAL_WUMPUS:
-                            WumpusGame.playerMap[row, col]._wumpusCount++;
+                        case PotentialType.WUMPUS:
+                            WumpusGame.playerMap[row, col].handlePotentialWumpus();
                             break;
                     }
                 }

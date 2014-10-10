@@ -32,15 +32,15 @@ namespace WumpusProject
                 { // run test!
                     _game = new WumpusGame();
 
-                    Console.WriteLine(_game.SetupGridSize(test[0]));
+                    Console.WriteLine(_game.setupGridSize(test[0]));
 
                     int len = test.Count;
                     for (int i = 1; i < len; ++i)
                     {
-                        Console.WriteLine(_game.AddAttributes(test[i]));
+                        Console.WriteLine(_game.addAttributes(test[i]));
                     }
 
-                    _game.Run();
+                    _game.run();
                     Console.WriteLine(); // just to add a new line
                     continue;
                 }
@@ -60,7 +60,7 @@ namespace WumpusProject
                     choice = Console.ReadLine();
 
                     _game = new WumpusGame();
-                    Console.WriteLine(_game.SetupGridSize(choice));
+                    Console.WriteLine(_game.setupGridSize(choice));
                     continue;
                 }
 
@@ -76,13 +76,13 @@ namespace WumpusProject
                         break;
                     case "run":
                         _gridSet = false;
-                        _game.Run();
+                        _game.run();
                         Console.WriteLine(); // just to add a new line
                         break;
                     case "exit":
                         break;
                     default:
-                        Console.WriteLine(_game.AddAttributes(choice));
+                        Console.WriteLine(_game.addAttributes(choice));
                         break;
                 }
             } while (choice != "exit");

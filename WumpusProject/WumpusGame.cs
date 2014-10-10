@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows;
 
 namespace WumpusProject
 {
     public class WumpusGame
     {
+        public enum Direction { NONE, UP, LEFT, DOWN, RIGHT };
+
         private const string START_LOCATION = "E";
         private const string BREEZY = "B";
         private const string STENCH = "S";
@@ -14,70 +17,75 @@ namespace WumpusProject
 
         private static bool _runningSetup; // make sure no one manipulates PerfectNodes after setup
 
-        public static bool goHome = false;
-        public static bool wumpusFound = false;
-        public static bool wumpusKilled = false;
-        public static bool goldFound = false;
-
-        public static int boardRows;
-        public static int boardCols;
-
         public static PerfectNode[,] perfectMap;
-        public static Node[,] playerMap; // TODO: Although it's a double list, I suggest we set it up like perfect node where it's a double array for simplicity
+        public static Node[,] playerMap;
+
+        public static bool goldFound = false;
+        public static bool wumpusKilled = false;
+
+        public static int totalRows;
+        public static int totalCols;
+
+        public static List<Node> potentialWumpusNodes;
+
+        private static int _wumpusRow = -1;
+        private static int _wumpusCol = -1;
 
         private int _startRow = -1;
         private int _startCol = -1;
 
-        private int _currRow;
-        private int _currCol;
-
-        // TODO: see if this is needed
-        private int _wumpusRow = -1;
-        private int _wumpusCol = -1;
+        private List<Command> _commands;
+        private List<Node> _goals;
 
         public WumpusGame()
         {
             // reset static variables
-            goHome = false;
-            wumpusFound = false;
             wumpusKilled = false;
             goldFound = false;
 
+            if (potentialWumpusNodes == null)
+                potentialWumpusNodes = new List<Node>();
+
+            potentialWumpusNodes.Clear();
+
             _wumpusRow = -1;
             _wumpusCol = -1;
+
+            Node.OnSafetyPitCheck += checkPitSafety;
+            Node.OnSafetyWumpusCheck += checkWumpusSafety;
         }
-        
+
+        #region SetupRegion
         public static bool runningSetup
         {
             get { return _runningSetup; }
         }
 
-        public string SetupGridSize(string choice)
+        public string setupGridSize(string choice)
         {
             _runningSetup = true;
 
             // NOTE: Currently assumes a square grid
             string[] choices = choice.Split(',');
-            boardRows = Convert.ToInt32(choices[0]);
-            boardCols = Convert.ToInt32(choices[1]);
+            totalRows = Convert.ToInt32(choices[0]);
+            totalCols = Convert.ToInt32(choices[1]);
 
-            perfectMap = new PerfectNode[boardRows, boardCols];
-            playerMap = new Node[boardRows, boardCols];
+            perfectMap = new PerfectNode[totalRows, totalCols];
+            playerMap = new Node[totalRows, totalCols];
 
-            for (int row = 0; row < boardRows; row++)
+            for (int row = 0; row < totalRows; row++)
             {
-                for (int col = 0; col < boardCols; col++)
+                for (int col = 0; col < totalCols; col++)
                 {
                     perfectMap[row, col] = new PerfectNode();
-                    playerMap[row, col] = new Node(row, col); // initialize to null so that we can populate anything at any point
+                    playerMap[row, col] = new Node(row, col);
                 }
             }
 
-
-            return "\n\tGrid size is " + boardRows + " by " + boardCols + "\n";
+            return "\n\tGrid size is " + totalRows + " by " + totalCols + "\n";
         }
 
-        public string AddAttributes(string choice)
+        public string addAttributes(string choice)
         {
             string retVal = "\n\t";
 
@@ -102,9 +110,6 @@ namespace WumpusProject
                         _startRow = row;
                         _startCol = col;
 
-                        _currRow = _startRow;
-                        _currCol = _startCol;
-                        
                         retVal += "Player will enter at: (" + _startRow + "," + _startCol + ")\n";
                         break;
                     case WUMPUS:
@@ -140,8 +145,48 @@ namespace WumpusProject
             
             return retVal;
         }
+        #endregion Setup
 
-        public void Run()
+        public static void setWumpusPosition(int row, int col)
+        {
+            if (_wumpusRow != -1 || _wumpusCol != -1)
+                throw new Exception("Wumpus position has already been set!");
+
+            _wumpusRow = row;
+            _wumpusCol = col;
+        }
+
+        private void checkPitSafety(Node node)
+        {
+            if (node.isSafe)
+            { // add the node to the goal list since it's safe!
+
+                // TODO: Discuss where it should be added! For now it's added to the top of the list
+                _goals.Add(node);
+            }
+        }
+
+        private void checkWumpusSafety(Node node)
+        {
+            if (node.isSafe)
+            { // add the node to the goal list since it's safe!
+
+                // TODO: Discuss where it should be added! For now it's added to the top of the list
+                _goals.Add(node);
+            }
+
+            // remove node from potentialWumpusNodes
+            potentialWumpusNodes.Remove(node);
+
+            if (potentialWumpusNodes.Count == 1)
+            { // WE FOUND THE WUMPUS BY REMOVING ALL OTHER OPTIONS!
+                Node wumpusNode = potentialWumpusNodes[0];
+                setWumpusPosition(wumpusNode.row, wumpusNode.col);
+                potentialWumpusNodes.Clear();
+            }
+        }
+
+        public void run()
         {
             _runningSetup = false;
 
@@ -153,17 +198,117 @@ namespace WumpusProject
 
             Console.WriteLine("~~NOW SOLVING WUMPUS GAME~~");
 
-            Node currentNode;
+            Node currentNode = null;
+            int currRow = _startRow;
+            int currCol = _startCol;
 
-            Node potentialNode;
+            Node goalNode = null;
+            _goals = new List<Node>();
+            _commands = new List<Command>();
 
             // TODO: SETUP AND RUN ALGORITHM HERE
-//            while (true)
-//            {
-//                // get information about the current node from the perfect node
-//                currentNode = playerMap[_currRow, _currCol];
-//                currentNode.updateFromPerfectNode(perfectMap[_currRow, _currCol]);
-//            }
+            while (true)
+            {
+                // Get perfect node information and set it to the current node
+                // current node will handle updating the adjacent neighbors accordingly
+                currentNode = playerMap[currRow, currCol];
+                currentNode.updateFromPerfectNode(perfectMap[currRow, currCol]);
+
+                // Get updated goals
+                tryToAddToGoals(currRow - 1, currCol); // try adding UP
+                tryToAddToGoals(currRow, currCol - 1); // try adding LEFT
+                tryToAddToGoals(currRow + 1, currCol); // try adding DOWN
+                tryToAddToGoals(currRow, currCol + 1); // try adding RIGHT
+                
+                // Handle goal
+                if (_goals.Count == 0)
+                { // WE HAVE NO GOALS
+                    if (_wumpusRow != -1 && _wumpusCol != -1)
+                    { // we know where the wumpus is! KILL IT
+
+                        // Step 1: find shortest path to kill the wumpus (populate the commands)
+
+                        // Step 2: if goldFound is false, then use distance method to find shortest path to get to the wumpus location (populate the commands)
+
+                        // Step 3: if goldFound is true, GO HOME
+                            // find shortest path from current location to the entrance and store the commands
+
+                            // we're done with the algorithm so break out
+                            //break;
+
+                    }
+                    else
+                    { // we don't know where the wumpus is!
+                        // GO HOME! WE GIVE UP!
+
+                        // find shortest path from current location to the entrance and store the commands
+
+                        // we're done with the algorithm so break out
+                        break;
+                    }
+                }
+                else
+                { // WE HAVE GOALS
+                    // pop the last node out of the goals list
+                    goalNode = _goals[_goals.Count - 1];
+                    _goals.Remove(goalNode);
+
+                    // if goal is next to current goal
+                    if (getDirection(currentNode, goalNode) != Direction.NONE)
+                    { // set the command and then continue
+                        _commands.Add(new Command(goalNode.row, goalNode.col));
+                    }
+                    else
+                    { // otherwise calculate the shortest visited path to the goal and populate the command list
+
+                    }
+
+                    // set current row and current column
+                    currRow = goalNode.row;
+                    currCol = goalNode.col;
+                }
+            }
+
+            // TODO: Display commands here!
+        }
+
+        private void tryToAddToGoals(int row, int col)
+        {
+            if (row < 0 || row >= totalRows)
+                return; // row not within bounds. ignore.
+
+            if (col < 0 || col >= totalCols)
+                return; // column not within bounds. ignore.
+
+            Node node = playerMap[row, col];
+
+            if (node.visited)
+                return; // has been visited. ignore.
+
+            if (!node.isSafe)
+                return; // not safe. ignore.
+
+            if (_goals.IndexOf(node) != -1)
+                _goals.Remove(node); // remove from the list to then add it to the end
+
+            _goals.Add(node); // add to the end of the list
+        }
+
+        private Direction getDirection(Node fromNode, Node toNode)
+        {
+            if (playerMap[fromNode.row - 1, fromNode.col] == toNode)
+                return Direction.UP;
+
+            if (playerMap[fromNode.row, fromNode.col - 1] == toNode)
+                return Direction.LEFT;
+
+            if (playerMap[fromNode.row + 1, fromNode.col] == toNode)
+                return Direction.DOWN;
+
+            if (playerMap[fromNode.row, fromNode.col + 1] == toNode)
+                return Direction.RIGHT;
+
+            return Direction.NONE;
         }
     }
 }

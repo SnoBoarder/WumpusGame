@@ -1,0 +1,54 @@
+- Find perfect node information
+- Populate beliefs about neighboring nodes
+	- If stench:
+		- Neighboring node must check all visited slots around it to see if there's also stench.
+			- Constants:
+				- UNKNOWN = 0
+				- NO_WUMPUS = 1
+				- WUMPUS_HERE = 2
+			- If neighbors == 1, then return UNKNOWN
+			- We can now assume we have 2 or more neighbors
+			- If 2 or more stench is found, then return WUMPUS_HERE
+			- Else, return NO_WUMPUS
+	- If breezy:
+		- Neighboring node must check all visited slots around it to see if there's also breeze.
+			- Constants:
+				- UNKNOWN = 0
+				- NO_PIT = 1
+				- PIT_HERE = 2
+			- If neighbors == 1, then return UNKNOWN
+			- We can now assume we have 2 or more neighbors
+			- If 2 or more breezy is found, then return PIT_HERE
+			- Else, return NO_PIT
+	- If Pit:
+		- You lose...
+	- If Wumpus:
+		- You lose...
+	- If Gold:
+		- Pick up
+- Look UP, LEFT, DOWN, RIGHT
+	- Check if it's a valid goal
+		- If visited, return false
+		- If possible pit, return false
+		- If possible wumpus, return false
+		- Otherwise, return true
+	- If true, add to goal list at the top of the stack
+- Look at goal list
+	- If goal has no items and we know where the wumpus is, focus on killing the wumpus
+		- WumpusKilling()
+	- If goal has no items and we don't know where the wumpus is, go back home (we've failed to optimize our score OR it's a crappy board)
+	- If goal, then take the first from the list
+		- If goal is adjacent to current location, then simply set the command to be the goal.
+		- Otherwise, calculate shortest visited path to goal and populate command list.
+- Set _currRow and _currCol to goal node
+
+- Input for killing the wumpus
+	- Row/col for the wumpus
+	- Use distance method to find shortest path
+	- Populate command with the path
+	- Move to location and kill wumpus
+	- If hasGold is false, then add row/col of wumpus to our goal
+	- Otherwise, go home.
+
+- Inputs for finding out where to go:
+	- Start row/col and end row/col

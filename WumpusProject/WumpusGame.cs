@@ -158,7 +158,7 @@ namespace WumpusProject
 
         private void checkPitSafety(Node node)
         {
-            if (node.isSafe)
+            if (!node.visited && node.isSafe)
             { // add the node to the goal list since it's safe!
 
                 // TODO: Discuss where it should be added! For now it's added to the top of the list
@@ -168,7 +168,7 @@ namespace WumpusProject
 
         private void checkWumpusSafety(Node node)
         {
-            if (node.isSafe)
+            if (!node.visited  && node.isSafe)
             { // add the node to the goal list since it's safe!
 
                 // TODO: Discuss where it should be added! For now it's added to the top of the list
@@ -260,7 +260,7 @@ namespace WumpusProject
                     }
                     else
                     { // otherwise calculate the shortest visited path to the goal and populate the command list
-
+                        throw new Exception("IMPLEMENT SHORTEST VISITED PATH METHOD");
                     }
 
                     // set current row and current column
@@ -296,16 +296,16 @@ namespace WumpusProject
 
         private Direction getDirection(Node fromNode, Node toNode)
         {
-            if (playerMap[fromNode.row - 1, fromNode.col] == toNode)
+            if (fromNode.row - 1 >= 0 && playerMap[fromNode.row - 1, fromNode.col] == toNode)
                 return Direction.UP;
 
-            if (playerMap[fromNode.row, fromNode.col - 1] == toNode)
+            if (fromNode.col - 1 >= 0 && playerMap[fromNode.row, fromNode.col - 1] == toNode)
                 return Direction.LEFT;
 
-            if (playerMap[fromNode.row + 1, fromNode.col] == toNode)
+            if (fromNode.row + 1< totalRows && playerMap[fromNode.row + 1, fromNode.col] == toNode)
                 return Direction.DOWN;
 
-            if (playerMap[fromNode.row, fromNode.col + 1] == toNode)
+            if (fromNode.col + 1 < totalCols && playerMap[fromNode.row, fromNode.col + 1] == toNode)
                 return Direction.RIGHT;
 
             return Direction.NONE;

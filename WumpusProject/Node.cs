@@ -12,7 +12,7 @@ namespace WumpusProject
 
         private enum PitState { UNKNOWN, POTENTIAL_PIT, NO_PIT, PIT_HERE };
         private enum WumpusState { UNKNOWN, POTENTIAL_WUMPUS, NO_WUMPUS, WUMPUS_HERE };
-        enum PotentialType { PIT, WUMPUS };
+        private enum UpdateType { NO_PIT, NO_WUMPUS, POTENTIAL_PIT, POTENTIAL_WUMPUS };
 
         private PitState _pitState = PitState.UNKNOWN;
         private WumpusState _wumpusState = WumpusState.UNKNOWN;
@@ -64,14 +64,8 @@ namespace WumpusProject
             {
                 for (int col = _col - 1; col <= _col + 1; col++)
                 {
-                    if (row < 0 || row >= WumpusGame.totalRows)
-                        continue; // row not within bounds. ignore.
-
-                    if (col < 0 || col >= WumpusGame.totalCols)
-                        continue; // column not within bounds. ignore.
-
-                    if (row == _row || col == _col)
-                        continue; // ignore self
+                    if (!isAdjacent(row, col))
+                        continue;
 
                     neighbor = WumpusGame.playerMap[row, col];
 
@@ -97,11 +91,16 @@ namespace WumpusProject
             }
             else
             {
-                _pitState = PitState.NO_PIT;
-
-                if (OnSafetyPitCheck != null)
-                    OnSafetyPitCheck(this); // dispatch event to make the wumpus game check the safety of this node again
+                setStateNoPit();
             }
+        }
+
+        public void setStateNoPit()
+        {
+            _pitState = PitState.NO_PIT;
+
+            if (OnSafetyPitCheck != null)
+                OnSafetyPitCheck(this); // dispatch event to make the wumpus game check the safety of this node again
         }
 
         public void handlePotentialWumpus()
@@ -115,14 +114,8 @@ namespace WumpusProject
             {
                 for (int col = _col - 1; col <= _col + 1; col++)
                 {
-                    if (row < 0 || row >= WumpusGame.totalRows)
-                        continue; // row not within bounds. ignore.
-
-                    if (col < 0 || col >= WumpusGame.totalCols)
-                        continue; // column not within bounds. ignore.
-
-                    if (row == _row || col == _col)
-                        continue; // ignore self
+                    if (!isAdjacent(row, col))
+                        continue;
 
                     neighbor = WumpusGame.playerMap[row, col];
 
@@ -153,11 +146,16 @@ namespace WumpusProject
             }
             else
             {
-                _wumpusState = WumpusState.NO_WUMPUS;
-
-                if (OnSafetyWumpusCheck != null)
-                    OnSafetyWumpusCheck(this); // dispatch event to make the wumpus game check the safety of this node again
+                setStateNoWumpus();
             }
+        }
+
+        public void setStateNoWumpus()
+        {
+            _wumpusState = WumpusState.NO_WUMPUS;
+
+            if (OnSafetyWumpusCheck != null)
+                OnSafetyWumpusCheck(this); // dispatch event to make the wumpus game check the safety of this node again
         }
 
         public void updateFromPerfectNode(PerfectNode perfectNode)
@@ -169,7 +167,11 @@ namespace WumpusProject
 
             if (_perfectNode.isBreezy)
             { // notify adjacent nodes that they could be potential pits
-                updateAdjacentNodesWith(PotentialType.PIT);
+                updateAdjacentNodesWith(UpdateType.POTENTIAL_PIT);
+            }
+            else
+            {
+                updateAdjacentNodesWith(UpdateType.NO_PIT);
             }
 
             if (_perfectNode.isPit)
@@ -184,7 +186,11 @@ namespace WumpusProject
 
             if (_perfectNode.isStench)
             { // notify adjacent nodes that their wumpusCount needs to increase
-                updateAdjacentNodesWith(PotentialType.WUMPUS);
+                updateAdjacentNodesWith(UpdateType.POTENTIAL_WUMPUS);
+            }
+            else
+            {
+                updateAdjacentNodesWith(UpdateType.NO_WUMPUS);
             }
 
             if (_perfectNode.hasGold)
@@ -193,33 +199,59 @@ namespace WumpusProject
             }
         }
 
-        private void updateAdjacentNodesWith(PotentialType type)
+        private void updateAdjacentNodesWith(UpdateType type)
         {
             // go through all adjacent nodes and set their information
             for (int row = _row - 1; row <= _row + 1; row++)
             {
                 for (int col = _col - 1; col <= _col + 1; col++)
                 {
-                    if (row < 0 || row >= WumpusGame.totalRows)
-                        continue; // row not within bounds. ignore.
-
-                    if (col < 0 || col >= WumpusGame.totalCols)
-                        continue; // column not within bounds. ignore.
-
-                    if (row == _row || col == _col)
-                        continue; // ignore self
+                    if (!isAdjacent(row, col))
+                        continue;
 
                     switch (type)
                     {
-                        case PotentialType.PIT:
+                        case UpdateType.NO_PIT:
+                            WumpusGame.playerMap[row, col].setStateNoPit();
+                            break;
+                        case UpdateType.NO_WUMPUS:
+                            WumpusGame.playerMap[row, col].setStateNoWumpus();
+                            break;
+                        case UpdateType.POTENTIAL_PIT:
                             WumpusGame.playerMap[row, col].handlePotentialPit();
                             break;
-                        case PotentialType.WUMPUS:
+                        case UpdateType.POTENTIAL_WUMPUS:
                             WumpusGame.playerMap[row, col].handlePotentialWumpus();
                             break;
                     }
                 }
             }
+        }
+
+        private bool isAdjacent(int row, int col)
+        {
+            if (row < 0 || row >= WumpusGame.totalRows)
+                return false;
+
+            if (col < 0 || col >= WumpusGame.totalCols)
+                return false; // column not within bounds. ignore.
+
+            if (row == _row && col == _col)
+                return false; // ignore self
+
+            if (_row - 1 == row && _col - 1 == col)
+                return false; // ignore top left
+
+            if (_row - 1 == row && _col + 1 == col)
+                return false; // ignore top right
+            
+            if (_row + 1 == row && _col + 1 == col)
+                return false; // ignore bottom right
+
+            if (_row + 1 == row && _col - 1 == col)
+                return false; // ignore bottom left
+
+            return true;
         }
     }
 }

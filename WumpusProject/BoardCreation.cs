@@ -12,7 +12,7 @@ namespace WumpusProject
         //separate variables to use for board creation
         //we do not need the entire node data structure
         private bool[,] creationBoard_;
-        private int[,] creationDist_;
+        private int[,] dists_;
 
         List<string> commandList_;
 
@@ -30,15 +30,17 @@ namespace WumpusProject
             int goldC = 0;
             bool wumpusPlaced = false;
             bool goldPlaced = false;
+            int pitsPlaced = 0;
 
             commandList_ = new List<string>();
             Random rnd = new Random();
 
-            //max pits is rows * cols(all the squares) - 3(where 3 is player, gold, wumpus, and forbidden squares max 8);
-            int numPits = rnd.Next(0, (rows * cols) - 8);
+            //max pits is rows * cols(all the squares) - 3(known safe squares) - 3 (player,gold,wumpus)
+            int numPits = rnd.Next(0, (rows * cols) - 3 - 3);
             while (!solved)
             {
                 creationBoard_ = new bool[rows, cols];
+                dists_ = new int[rows, cols];
 
                 for (int x = 0; x < rows; x++)
                 {
@@ -83,10 +85,86 @@ namespace WumpusProject
                     }
                 }
 
+                pitsPlaced = 0;
+                while(pitsPlaced < numPits)
+                {
+                    row = rnd.Next(0, rows - 1);
+                    col = rnd.Next(0, cols - 1);
+
+                    if (creationBoard_[row, col] && row != goldR && col != goldC 
+                        && Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1)
+                    {
+                        //if it is a safe spot, there is no gold, and not a starting area. We are good to go
+                        creationBoard_[row, col] = false;
+                        pitsPlaced++;
+                    }
+                }
+
+                //now make sure there is a solution
+                flood(startR, startC, 0);
+
+                if(dists_[goldR, goldC] != -1)
+                {
+                    //we have a solution
+                    solved = true;
+                }
             }
-            commandList.Add("null");
+            commandList_.Add("null");
         }
 
+        private void flood(int curRow, int curCol, int dist)
+        {
+            if (dists_[curRow, curCol] > dist)
+            {
+                dists_[curRow, curCol] = dist;
 
+                //flood to neighbors that we have visited. This will take us back to the node we came from.
+                //distance will be less so that path will stop
+                if (inBounds(curRow - 1, curCol) && creationBoard_[curRow - 1, curCol])
+                {
+                    flood(curRow - 1, curCol, dist++);
+                }
+
+                if (inBounds(curRow + 1, curCol) && creationBoard_[curRow + 1, curCol])
+                {
+                    flood(curRow + 1, curCol, dist++);
+                }
+
+                if (inBounds(curRow, curCol - 1) && creationBoard_[curRow, curCol - 1])
+                {
+                    flood(curRow, curCol - 1, dist++);
+                }
+
+                if (inBounds(curRow, curCol + 1) && creationBoard_[curRow, curCol + 1])
+                {
+                    flood(curRow, curCol + 1, dist++);
+                }
+            }
+        }
+
+        //[inputs] : node 1 = where you are, node 2 = where you want to go
+        //[outputs] : shortest path distance between the two. -1 if no path exists.
+
+        private void clearDist()
+        {
+            for (int x = 0; x < dists_.GetLength(0); x++)
+            {
+                for (int y = 0; y < dists_.GetLength(1); y++)
+                {
+                    dists_[x, y] = -1;
+                }
+            }
+        }
+
+        private bool inBounds(int row, int col)
+        {
+            if (row < 0 || row >= creationBoard_.GetLength(0))
+                return false;
+
+            if (col < 0 || col >= creationBoard_.GetLength(1))
+                return false; // column not within bounds. ignore.
+
+            return true;
+        }
     }
 }

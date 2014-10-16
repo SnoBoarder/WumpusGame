@@ -41,8 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BoardCreation.cs" />
     <Compile Include="Command.cs" />
-    <Compile Include="ManipBoard.cs" />
+    <Compile Include="Distance.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="PerfectNode.cs" />
     <Compile Include="Program.cs" />

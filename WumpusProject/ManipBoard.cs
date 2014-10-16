@@ -23,13 +23,19 @@ namespace WumpusProject
         {
             board_ = input;
             dists_ = new int[input.GetLength(0), input.GetLength(1)];
- 
+
+            rows_ = input.GetLength(0);
+            cols_ = input.GetLength(1);
+
             curNode_ = null;
             clearDist();
         }
 
-        public void makeBoard(int rows, int cols)
+
+        public PerfectNode[,] makeBoard(int rows, int cols)
         {
+            PerfectNode[,] pBoard = new PerfectNode[rows, cols];
+
             board_ = new Node[rows, cols];
             dists_ = new int[rows, cols];
 
@@ -43,6 +49,8 @@ namespace WumpusProject
             
             rows_ = rows;
             cols_ = cols;
+
+            return pBoard;
         }
 
         private void flood(Node node, int dist)

@@ -22,6 +22,8 @@ namespace WumpusProject
         public void updateBoard(Node[,] input)
         {
             board_ = input;
+            dists_ = new int[input.GetLength(0), input.GetLength(1)];
+ 
             curNode_ = null;
             clearDist();
         }

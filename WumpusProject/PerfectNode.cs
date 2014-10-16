@@ -12,7 +12,6 @@ namespace WumpusProject
 
         public PerfectNode()
         {
-
         }
 
         public bool isPit

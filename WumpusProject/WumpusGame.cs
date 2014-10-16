@@ -44,6 +44,8 @@ namespace WumpusProject
             wumpusKilled = false;
             goldFound = false;
 
+            tool_ = new Distance();
+            
             if (potentialWumpusNodes == null)
                 potentialWumpusNodes = new List<Node>();
 
@@ -82,7 +84,7 @@ namespace WumpusProject
                     playerMap[row, col] = new Node(row, col);
                 }
             }
-
+            
             return "\n\tGrid size is " + totalRows + " by " + totalCols + "\n";
         }
 

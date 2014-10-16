@@ -19,7 +19,7 @@ namespace WumpusProject
 
         public static PerfectNode[,] perfectMap;
         public static Node[,] playerMap;
-        public static ManipBoard tool_;
+        public static Distance tool_;
 
         public static bool goldFound = false;
         public static bool wumpusKilled = false;

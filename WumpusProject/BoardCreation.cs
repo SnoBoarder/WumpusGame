@@ -16,8 +16,13 @@ namespace WumpusProject
 
         List<string> commandList_;
 
-        public BoardCreation(int rows, int cols)
+        public BoardCreation()
         {
+           
+        }
+
+        public void makeBoard(int rows, int cols)
+        { 
             //so that usage of this makeBoard is invisible to distTo
 
             bool solved = false;
@@ -95,12 +100,12 @@ namespace WumpusProject
                 }
 
                 pitsPlaced = 0;
-                while(pitsPlaced < numPits)
+                while (pitsPlaced < numPits)
                 {
                     row = rnd.Next(0, rows - 1);
                     col = rnd.Next(0, cols - 1);
 
-                    if (creationBoard_[row, col] && row != goldR && col != goldC 
+                    if (creationBoard_[row, col] && row != goldR && col != goldC
                         && Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1)
                     {
                         //if it is a safe spot, there is no gold, and not a starting area. We are good to go
@@ -115,27 +120,27 @@ namespace WumpusProject
                 //now make sure there is a solution
                 flood(startR, startC, 0);
 
-                if(dists_[goldR, goldC] != -1)
+                if (dists_[goldR, goldC] != -1)
                 {
                     //we have a solution
                     solved = true;
                 }
             }
 
-            for (int x = 0; x < rows; x ++)
+            for (int x = 0; x < rows; x++)
             {
                 for (int y = 0; y < cols; y++)
                 {
                     string atts = "";
 
-                    if(Math.Abs(wumpC - y) == 1 || Math.Abs(wumpR - x) == 1)
+                    if (Math.Abs(wumpC - y) == 1 || Math.Abs(wumpR - x) == 1)
                     {
                         atts += "S";
                     }
 
-                    for(int z = 0; z < pits.Count; z++)
+                    for (int z = 0; z < pits.Count; z++)
                     {
-                        if(Math.Abs(pits[z][0] - x) == 1 || Math.Abs(pits[z][1] - y) == 1)
+                        if (Math.Abs(pits[z][0] - x) == 1 || Math.Abs(pits[z][1] - y) == 1)
                         {
                             atts += "B";
                             break;

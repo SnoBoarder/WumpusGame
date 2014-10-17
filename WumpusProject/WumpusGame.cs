@@ -223,6 +223,9 @@ namespace WumpusProject
             _goals = new List<Node>();
             _commands = new List<Command>();
 
+            // add the first move to the list(?) TODO: Consider not adding the first move to the list
+            addCommand(currRow, currCol);
+
             // TODO: SETUP AND RUN ALGORITHM HERE
             while (true)
             {
@@ -230,9 +233,6 @@ namespace WumpusProject
                 // current node will handle updating the adjacent neighbors accordingly
                 currentNode = playerMap[currRow, currCol];
                 currentNode.updateFromPerfectNode(perfectMap[currRow, currCol]);
-
-                // update the distance function's board
-                tool_.updateBoard(playerMap);
 
                 cleanupGoals();
 
@@ -247,25 +247,46 @@ namespace WumpusProject
                 { // WE HAVE NO GOALS
                     if (_wumpusRow != -1 && _wumpusCol != -1)
                     { // we know where the wumpus is! KILL IT
-                        throw new Exception("KILL THE WUMPUS");
+
+                        if (wumpusKilled)
+                            throw new Exception("WUMPUS ALREADY KILLED. WTF.");
 
                         // Step 1: find shortest path to kill the wumpus (populate the commands)
+                        currentNode = killWumpus(currentNode); // populates command and makes final command kill the wumpus. make it the current node
 
                         // Step 2: if goldFound is false, then use distance method to find shortest path to get to the wumpus location (populate the commands)
+                        if (!goldFound)
+                        {
+                            // update the distance function's board
+                            tool_.updateBoard(playerMap);
 
-                        // Step 3: if goldFound is true, GO HOME
+                            Node wumpusNode = playerMap[_wumpusRow, _wumpusCol];
+                            populateCommandList(tool_.distTo(currentNode, wumpusNode));
+
+                            currentNode = wumpusNode;
+                            currRow = currentNode.row;
+                            currCol = currentNode.col;
+                        }
+                        else
+                        { // Step 3: if goldFound is true, GO HOME
+                            // update the distance function's board
+                            tool_.updateBoard(playerMap);
+
                             // find shortest path from current location to the entrance and store the commands
+                            populateCommandList(tool_.distTo(currentNode, playerMap[_startRow, _startCol]));
 
                             // we're done with the algorithm so break out
-                            //break;
-
+                            break;
+                        }
                     }
                     else
                     { // we don't know where the wumpus is!
-                        throw new Exception("LET'S GO HOME");
                         // GO HOME! WE GIVE UP!
+                        // update the distance function's board
+                        tool_.updateBoard(playerMap);
 
                         // find shortest path from current location to the entrance and store the commands
+                        populateCommandList(tool_.distTo(currentNode, playerMap[_startRow, _startCol]));
 
                         // we're done with the algorithm so break out
                         break;
@@ -284,10 +305,11 @@ namespace WumpusProject
                     }
                     else
                     { // otherwise calculate the shortest visited path to the goal and populate the command list
+                        // update the distance function's board
+                        tool_.updateBoard(playerMap);
+
                         populateCommandList(tool_.distTo(currentNode, goalNode));
                     }
-
-                    Console.WriteLine("New goal: " + goalNode.row + ", " + goalNode.col);
 
                     // set current row and current column
                     currRow = goalNode.row;
@@ -296,10 +318,16 @@ namespace WumpusProject
             }
 
             // TODO: Display commands here!
+            int len = _commands.Count;
+            for (int i = 0; i < len; ++i)
+            {
+                Console.WriteLine(_commands[i].output);
+            }
         }
 
         private void addCommand(int row, int col)
         {
+            Console.WriteLine("Command: " + row + ", " + col);
             _commands.Add(new Command(row, col));
         }
 
@@ -344,8 +372,15 @@ namespace WumpusProject
 
         private void populateCommandList(string cmdStr)
         {
-            string[] cmdList = cmdStr.Split(Distance.SEPARATOR);
+            populateCommandList(cmdStr.Split(Distance.SEPARATOR));
+        }
 
+        /// <summary>
+        /// Populate the command list based on the passed on command list
+        /// </summary>
+        /// <param name="cmdList"></param>
+        private void populateCommandList(string[] cmdList)
+        {
             string[] pos;
 
             int len = cmdList.Length;
@@ -360,6 +395,9 @@ namespace WumpusProject
             }
         }
 
+        /// <summary>
+        /// Clean up the goal list by removing all visited nodes from the goal list
+        /// </summary>
         private void cleanupGoals()
         {
             int len = _goals.Count;
@@ -368,6 +406,67 @@ namespace WumpusProject
                 if (_goals[i].visited)
                     _goals.RemoveAt(i);
             }
+        }
+
+        /// <summary>
+        /// kill wumpus method moves the user to a location to then shoot an arrow at the wumpus to kill int he following steps:
+        /// 1. go to nearest row or column of the wumpus.
+        /// 2. once there, update the last command to shoot the arrow in the appropriate direction
+        /// 3. update that the wumpus has been killed and set the state of the node that had the wumpus to have no wumpus
+        /// </summary>
+        /// <param name="currentNode"></param>
+        /// <returns>return the NEWEST current node position after shooting the wumpus</returns>
+        private Node killWumpus(Node currentNode)
+        {
+            // update the distance function's board
+            tool_.updateBoard(playerMap);
+
+            string[] nearestRow = null;
+
+            Node potentialNode = playerMap[_wumpusRow, currentNode.col];
+            if (potentialNode.visited)
+            { // we've visited the node that is in the same row as the wumpus. get it's distance
+                nearestRow = tool_.distTo(currentNode, potentialNode).Split(Distance.SEPARATOR);
+            }
+
+            string[] nearestCol = null;
+            potentialNode = playerMap[currentNode.row, _wumpusCol];
+            if (potentialNode.visited)
+            {
+                nearestCol = tool_.distTo(currentNode, potentialNode).Split(Distance.SEPARATOR);
+            }
+
+            string[] shortestDist;
+            if (nearestRow == null)
+            { // can't reach by row. take the col option
+                shortestDist = nearestCol;
+            }
+            else if (nearestCol == null)
+            { // can't reach by col. take the row option
+                shortestDist = nearestRow;
+            }
+            else
+            { // take the option that is the shortest distance to get in the same row or col of the wumpus
+                shortestDist = nearestCol.Length <= nearestRow.Length ? nearestCol : nearestRow;
+            }
+
+            populateCommandList(shortestDist);
+
+            // set arrow direction for the last command (which should be the same row or column as the wumpus)
+            Command lastCommand = _commands[_commands.Count - 1];
+            if (lastCommand.row == _wumpusRow)
+                lastCommand.shootArrow = _wumpusCol - lastCommand.col > 0 ? Direction.RIGHT : Direction.LEFT;
+            else
+                lastCommand.shootArrow = _wumpusRow - lastCommand.row > 0 ? Direction.DOWN : Direction.UP;
+
+            // wumpus has been killed! set it!
+            wumpusKilled = true;
+
+            // update the wumpus node to have no more wumpus!
+            playerMap[_wumpusRow, _wumpusCol].setStateNoWumpus();
+
+            // return new node position
+            return playerMap[lastCommand.row, lastCommand.col];
         }
     }
 }

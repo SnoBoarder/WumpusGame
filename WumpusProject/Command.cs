@@ -28,6 +28,34 @@ namespace WumpusProject
         public WumpusGame.Direction shootArrow
         {
             get { return _shootArrow; }
+
+            set { _shootArrow = value; }
+        }
+
+        public string output
+        {
+            get
+            {
+                string str = "Moving to " + _row + ", " + _col;
+
+                switch (_shootArrow)
+                {
+                    case WumpusGame.Direction.DOWN:
+                        str += " and shooting arrow DOWN";
+                        break;
+                    case WumpusGame.Direction.LEFT:
+                        str += " and shooting arrow LEFT";
+                        break;
+                    case WumpusGame.Direction.RIGHT:
+                        str += " and shooting arrow RIGHT";
+                        break;
+                    case WumpusGame.Direction.UP:
+                        str += " and shooting arrow UP";
+                        break;
+                }
+
+                return str;
+            }
         }
     }
 }

@@ -50,7 +50,18 @@ namespace WumpusProject
 
         public bool isSafe
         {
-            get { return visited || (_pitState == PitState.NO_PIT && _wumpusState == WumpusState.NO_WUMPUS); }
+            get {
+                if (visited)
+                    return true;
+
+                if (_pitState != PitState.NO_PIT)
+                    return false;
+
+                if (_wumpusState != WumpusState.NO_WUMPUS)
+                    return WumpusGame.wumpusKilled;
+
+                return true;
+            }
         }
 
         public void handlePotentialPit()
@@ -105,6 +116,9 @@ namespace WumpusProject
 
         public void handlePotentialWumpus()
         {
+            if (WumpusGame.wumpusKilled)
+                return; // IT'S DEAD
+
             int neighborCount = 0;
             int stenchCount = 0;
 
@@ -179,7 +193,7 @@ namespace WumpusProject
                 throw new Exception("YOU FELL INTO A PIT");
             }
 
-            if (_perfectNode.isWumpus)
+            if (_perfectNode.isWumpus && !WumpusGame.wumpusKilled)
             { // player is killed by the wumpus... player loses 1000 points...
                 throw new Exception("YOU WALKED INTO A WUMPUS");
             }

@@ -26,11 +26,17 @@ namespace WumpusProject
             int startR = 0;
             int startC = 0;
 
+            int wumpR = 0;
+            int wumpC = 0;
+            List<int[]> pits = new List<int[]>();
+
             int goldR = 0;
             int goldC = 0;
             bool wumpusPlaced = false;
             bool goldPlaced = false;
             int pitsPlaced = 0;
+
+            int[] pitLoc = new int[2];
 
             commandList_ = new List<string>();
             Random rnd = new Random();
@@ -41,6 +47,7 @@ namespace WumpusProject
             {
                 creationBoard_ = new bool[rows, cols];
                 dists_ = new int[rows, cols];
+                pits.Clear();
 
                 for (int x = 0; x < rows; x++)
                 {
@@ -82,6 +89,8 @@ namespace WumpusProject
                     {
                         wumpusPlaced = true;
                         creationBoard_[row, col] = false;
+                        wumpR = row;
+                        wumpC = col;
                     }
                 }
 
@@ -96,6 +105,9 @@ namespace WumpusProject
                     {
                         //if it is a safe spot, there is no gold, and not a starting area. We are good to go
                         creationBoard_[row, col] = false;
+                        pitLoc[0] = row;
+                        pitLoc[1] = col;
+                        pits.Add(pitLoc);
                         pitsPlaced++;
                     }
                 }
@@ -109,7 +121,41 @@ namespace WumpusProject
                     solved = true;
                 }
             }
-            commandList_.Add("null");
+
+            for (int x = 0; x < rows; x ++)
+            {
+                for (int y = 0; y < cols; y++)
+                {
+                    string atts = "";
+
+                    if(Math.Abs(wumpC - y) == 1 || Math.Abs(wumpR - x) == 1)
+                    {
+                        atts += "S";
+                    }
+
+                    for(int z = 0; z < pits.Count; z++)
+                    {
+                        if(Math.Abs(pits[z][0] - x) == 1 || Math.Abs(pits[z][1] - y) == 1)
+                        {
+                            atts += "B";
+                            break;
+                        }
+                    }
+
+                    commandList_.Add(x.ToString() + "," + y.ToString() + "," + atts);
+                }
+            }
+            //add wumpus location
+            commandList_[wumpR * cols + wumpC] += "W";
+
+            //add gold location
+            commandList_[goldR * cols + goldC] += "G";
+
+            //add pits location(if not gold or wumpus, pit)
+            for (int x = 0; x < pits.Count; x++)
+            {
+                commandList_[pits[x][0] * cols + pits[x][1]] += "P";
+            }
         }
 
         private void flood(int curRow, int curCol, int dist)

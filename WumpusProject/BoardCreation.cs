@@ -8,6 +8,12 @@ namespace WumpusProject
 {
     public class BoardCreation
     {
+        /*
+         * Usage:
+         * BoardCreation creator = new BoardCreation();
+         * creator.makeBoard(rows, cols);
+         * list<string> newBoard = creator.getBoard();
+         */
 
         //separate variables to use for board creation
         //we do not need the entire node data structure
@@ -16,21 +22,31 @@ namespace WumpusProject
 
         List<string> commandList_;
 
-        public BoardCreation(int rows, int cols)
+        public BoardCreation()
         {
-            //so that usage of this makeBoard is invisible to distTo
+           
+        }
 
+        public void makeBoard(int rows, int cols)
+        { 
+            //so that usage of this makeBoard is invisible to distTo
             bool solved = false;
             int row = 0;
             int col = 0;
             int startR = 0;
             int startC = 0;
 
+            int wumpR = 0;
+            int wumpC = 0;
+            List<int[]> pits = new List<int[]>();
+
             int goldR = 0;
             int goldC = 0;
             bool wumpusPlaced = false;
             bool goldPlaced = false;
             int pitsPlaced = 0;
+
+            int[] pitLoc = new int[2];
 
             commandList_ = new List<string>();
             Random rnd = new Random();
@@ -41,6 +57,7 @@ namespace WumpusProject
             {
                 creationBoard_ = new bool[rows, cols];
                 dists_ = new int[rows, cols];
+                pits.Clear();
 
                 for (int x = 0; x < rows; x++)
                 {
@@ -78,24 +95,31 @@ namespace WumpusProject
                     row = rnd.Next(0, rows - 1);
                     col = rnd.Next(0, cols - 1);
 
-                    if (Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1 && Math.Abs(goldR - row) > 1 && Math.Abs(goldC - col) > 1)
+                    if (Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1 && Math.Abs(goldR - row) > 0 && Math.Abs(goldC - col) > 0)
                     {
                         wumpusPlaced = true;
                         creationBoard_[row, col] = false;
+                        wumpR = row;
+                        wumpC = col;
                     }
                 }
 
                 pitsPlaced = 0;
-                while(pitsPlaced < numPits)
+                while (pitsPlaced < numPits)
                 {
                     row = rnd.Next(0, rows - 1);
                     col = rnd.Next(0, cols - 1);
 
-                    if (creationBoard_[row, col] && row != goldR && col != goldC 
+                    if (creationBoard_[row, col] && row != goldR && col != goldC
                         && Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1)
                     {
                         //if it is a safe spot, there is no gold, and not a starting area. We are good to go
                         creationBoard_[row, col] = false;
+
+                        pitLoc = new int[2];
+                        pitLoc[0] = row;
+                        pitLoc[1] = col;
+                        pits.Add(pitLoc);
                         pitsPlaced++;
                     }
                 }
@@ -103,18 +127,79 @@ namespace WumpusProject
                 //now make sure there is a solution
                 flood(startR, startC, 0);
 
-                if(dists_[goldR, goldC] != -1)
+                if (dists_[goldR, goldC] != -1)
                 {
                     //we have a solution
                     solved = true;
+                    break;
+                }
+
+                clearDist();
+            }
+
+
+            //go through all and place attributes
+            for (int x = 0; x < rows; x++)
+            {
+                for (int y = 0; y < cols; y++)
+                {
+                    string atts = "";
+
+                    if (Math.Abs(wumpC - y) == 1 || Math.Abs(wumpR - x) == 1)
+                    {
+                        atts += "S";
+                    }
+
+                    for (int z = 0; z < pits.Count; z++)
+                    {
+                        if (Math.Abs(pits[z][0] - x) == 1 || Math.Abs(pits[z][1] - y) == 1)
+                        {
+                            atts += "B";
+                            break;
+                        }
+                    }
+
+                    commandList_.Add(x.ToString() + "," + y.ToString() + "," + atts);
                 }
             }
-            commandList_.Add("null");
+            //add wumpus location
+            commandList_[wumpR * cols + wumpC] += "W";
+
+            //add gold location
+            commandList_[goldR * cols + goldC] += "G";
+
+            //add pits location(if not gold or wumpus, pit)
+            for (int x = 0; x < pits.Count; x++)
+            {
+                commandList_[pits[x][0] * cols + pits[x][1]] += "P";
+            }
+
+           
+            int index = 0;
+            while (index < commandList_.Count())
+            {
+                int last = commandList_[index].LastIndexOf(',');
+
+                if ((last + 1) == commandList_[index].Length)
+                {
+                    //comma was the last thing, no attributes
+                    commandList_.RemoveAt(index);
+                }
+                else
+                {
+                    index++;
+                }
+            }
+        }
+
+        public List<string> getBoard()
+        {
+            return commandList_;
         }
 
         private void flood(int curRow, int curCol, int dist)
         {
-            if (dists_[curRow, curCol] > dist)
+            if (dists_[curRow, curCol] > dist || dists_[curRow, curCol] == -1)
             {
                 dists_[curRow, curCol] = dist;
 
@@ -122,22 +207,22 @@ namespace WumpusProject
                 //distance will be less so that path will stop
                 if (inBounds(curRow - 1, curCol) && creationBoard_[curRow - 1, curCol])
                 {
-                    flood(curRow - 1, curCol, dist++);
+                    flood(curRow - 1, curCol, dist+1);
                 }
 
                 if (inBounds(curRow + 1, curCol) && creationBoard_[curRow + 1, curCol])
                 {
-                    flood(curRow + 1, curCol, dist++);
+                    flood(curRow + 1, curCol, dist+1);
                 }
 
                 if (inBounds(curRow, curCol - 1) && creationBoard_[curRow, curCol - 1])
                 {
-                    flood(curRow, curCol - 1, dist++);
+                    flood(curRow, curCol - 1, dist+1);
                 }
 
                 if (inBounds(curRow, curCol + 1) && creationBoard_[curRow, curCol + 1])
                 {
-                    flood(curRow, curCol + 1, dist++);
+                    flood(curRow, curCol + 1, dist+1);
                 }
             }
         }

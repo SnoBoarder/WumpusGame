@@ -158,6 +158,11 @@ namespace WumpusProject
             }
         }
 
+        public List<string> getCommands()
+        {
+            return commandList_;
+        }
+
         private void flood(int curRow, int curCol, int dist)
         {
             if (dists_[curRow, curCol] > dist)

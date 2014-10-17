@@ -59,25 +59,25 @@ namespace WumpusProject
                 if (inBounds(curRow - 1, curCol) && board_[curRow - 1, curCol].visited)
                 {
                     commandLists += ((curRow - 1).ToString() + (curCol).ToString() + "@");
-                    flood(board_[curRow - 1, curCol], dist++, commandLists);
+                    flood(board_[curRow - 1, curCol], dist+1, commandLists);
                 }
 
                 if (inBounds(curRow + 1, curCol) && board_[curRow + 1, curCol].visited)
                 {
                     commandLists += ((curRow + 1).ToString() + (curCol).ToString() + "@");
-                    flood(board_[curRow + 1, curCol], dist++, commandLists);
+                    flood(board_[curRow + 1, curCol], dist+1, commandLists);
                 }
 
                 if (inBounds(curRow, curCol - 1) && board_[curRow, curCol - 1].visited)
                 {
                     commandLists += ((curRow).ToString() + (curCol - 1).ToString() + "@");
-                    flood(board_[curRow, curCol - 1], dist++, commandLists);
+                    flood(board_[curRow, curCol - 1], dist+1, commandLists);
                 }
 
                 if (inBounds(curRow, curCol + 1) && board_[curRow, curCol + 1].visited)
                 {
                     commandLists += ((curRow).ToString() + (curCol + 1).ToString() + "@");
-                    flood(board_[curRow, curCol + 1], dist++, commandLists);
+                    flood(board_[curRow, curCol + 1], dist+1, commandLists);
                 }
             }
         }

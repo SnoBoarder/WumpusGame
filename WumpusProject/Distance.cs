@@ -51,7 +51,7 @@ namespace WumpusProject
             int curRow = node.row;
             int curCol = node.col;
 
-            if (dists_[curRow, curCol] > dist || dists_[curRow, curCol] == -1)
+            if (dists_[curRow, curCol] >= dist || dists_[curRow, curCol] == -1)
             {
                 dists_[curRow, curCol] = dist;
                 cList_[curRow, curCol] = commandLists;
@@ -61,25 +61,25 @@ namespace WumpusProject
                 if (inBounds(curRow - 1, curCol) && board_[curRow - 1, curCol].isSafe)
                 {
                     commandLists += ((curRow - 1).ToString() + "," + (curCol).ToString() + SEPARATOR);
-                    flood(board_[curRow - 1, curCol], dist++, commandLists);
+                    flood(board_[curRow - 1, curCol], dist + 1, commandLists);
                 }
 
                 if (inBounds(curRow + 1, curCol) && board_[curRow + 1, curCol].isSafe)
                 {
                     commandLists += ((curRow + 1).ToString() + "," + (curCol).ToString() + SEPARATOR);
-                    flood(board_[curRow + 1, curCol], dist++, commandLists);
+                    flood(board_[curRow + 1, curCol], dist + 1, commandLists);
                 }
 
                 if (inBounds(curRow, curCol - 1) && board_[curRow, curCol - 1].isSafe)
                 {
                     commandLists += ((curRow).ToString() + "," + (curCol - 1).ToString() + SEPARATOR);
-                    flood(board_[curRow, curCol - 1], dist++, commandLists);
+                    flood(board_[curRow, curCol - 1], dist + 1, commandLists);
                 }
 
                 if (inBounds(curRow, curCol + 1) && board_[curRow, curCol + 1].isSafe)
                 {
                     commandLists += ((curRow).ToString() + "," + (curCol + 1).ToString() + SEPARATOR);
-                    flood(board_[curRow, curCol + 1], dist++, commandLists);
+                    flood(board_[curRow, curCol + 1], dist + 1, commandLists);
                 }
              }
         }

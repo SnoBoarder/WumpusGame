@@ -50,7 +50,7 @@ namespace WumpusProject
 
         public bool isSafe
         {
-            get { return _pitState == PitState.NO_PIT && _wumpusState == WumpusState.NO_WUMPUS; }
+            get { return visited || (_pitState == PitState.NO_PIT && _wumpusState == WumpusState.NO_WUMPUS); }
         }
 
         public void handlePotentialPit()
@@ -197,6 +197,10 @@ namespace WumpusProject
             { // WE GOT GOLD
                 WumpusGame.goldFound = true;
             }
+
+            // since we have visited this location, we know that there is no pit and no wumpus
+            _pitState = PitState.NO_PIT;
+            _wumpusState = WumpusState.NO_WUMPUS;
         }
 
         private void updateAdjacentNodesWith(UpdateType type)

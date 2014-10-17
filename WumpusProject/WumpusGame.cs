@@ -153,6 +153,14 @@ namespace WumpusProject
         }
         #endregion Setup
 
+        public static bool wumpusFound
+        {
+            get
+            {
+                return _wumpusRow != -1 && _wumpusCol != -1;
+            }
+        }
+
         public static void setWumpusPosition(int row, int col)
         {
             if (_wumpusRow != -1 || _wumpusCol != -1)
@@ -180,6 +188,9 @@ namespace WumpusProject
                 // TODO: Discuss where it should be added! For now it's added to the top of the list
                 _goals.Add(node);
             }
+
+            if (wumpusFound)
+                return; // we've already found the wumpus. ignore
 
             // remove node from potentialWumpusNodes
             potentialWumpusNodes.Remove(node);
@@ -223,17 +234,20 @@ namespace WumpusProject
                 // update the distance function's board
                 tool_.updateBoard(playerMap);
 
+                cleanupGoals();
+
                 // Get updated goals
                 tryToAddToGoals(currRow - 1, currCol); // try adding UP
                 tryToAddToGoals(currRow, currCol - 1); // try adding LEFT
                 tryToAddToGoals(currRow + 1, currCol); // try adding DOWN
                 tryToAddToGoals(currRow, currCol + 1); // try adding RIGHT
-                
+
                 // Handle goal
                 if (_goals.Count == 0)
                 { // WE HAVE NO GOALS
                     if (_wumpusRow != -1 && _wumpusCol != -1)
                     { // we know where the wumpus is! KILL IT
+                        throw new Exception("KILL THE WUMPUS");
 
                         // Step 1: find shortest path to kill the wumpus (populate the commands)
 
@@ -248,6 +262,7 @@ namespace WumpusProject
                     }
                     else
                     { // we don't know where the wumpus is!
+                        throw new Exception("LET'S GO HOME");
                         // GO HOME! WE GIVE UP!
 
                         // find shortest path from current location to the entrance and store the commands
@@ -271,6 +286,8 @@ namespace WumpusProject
                     { // otherwise calculate the shortest visited path to the goal and populate the command list
                         populateCommandList(tool_.distTo(currentNode, goalNode));
                     }
+
+                    Console.WriteLine("New goal: " + goalNode.row + ", " + goalNode.col);
 
                     // set current row and current column
                     currRow = goalNode.row;
@@ -334,12 +351,22 @@ namespace WumpusProject
             int len = cmdList.Length;
             for (int i = 0; i < len; ++i)
             {
+                if (cmdList[i] == "")
+                    continue;
+
                 pos = cmdList[i].Split(',');
 
-                if (cmdList.Length != 2)
-                    throw new Exception("Invalid command");
+                addCommand(Convert.ToInt32(pos[0]), Convert.ToInt32(pos[1]));
+            }
+        }
 
-                addCommand(Convert.ToInt32(cmdList[0]), Convert.ToInt32(cmdList[1]));
+        private void cleanupGoals()
+        {
+            int len = _goals.Count;
+            for (int i = len - 1; i >= 0; --i)
+            {
+                if (_goals[i].visited)
+                    _goals.RemoveAt(i);
             }
         }
     }

@@ -49,7 +49,7 @@ namespace WumpusProject
             int curRow = node.row;
             int curCol = node.col;
 
-            if (dists_[curRow, curCol] > dist || dists_[curRow, curCol] == -1)
+            if (dists_[curRow, curCol] >= dist || dists_[curRow, curCol] == -1)
             {
                 dists_[curRow, curCol] = dist;
                 cList_[curRow, curCol] = commandLists;

@@ -8,6 +8,8 @@ namespace WumpusProject
 {
     public class Distance
     {
+        public const char SEPARATOR = '|';
+
         /*
          * save the board for fast reference and distance calculations
         */
@@ -56,30 +58,30 @@ namespace WumpusProject
                 
                 //flood to neighbors that we have visited. This will take us back to the node we came from.
                 //distance will be less so that path will stop
-                if (inBounds(curRow - 1, curCol) && board_[curRow - 1, curCol].visited)
+                if (inBounds(curRow - 1, curCol) && board_[curRow - 1, curCol].isSafe)
                 {
-                    commandLists += ((curRow - 1).ToString() + (curCol).ToString() + "@");
+                    commandLists += ((curRow - 1).ToString() + "," + (curCol).ToString() + SEPARATOR);
                     flood(board_[curRow - 1, curCol], dist++, commandLists);
                 }
 
-                if (inBounds(curRow + 1, curCol) && board_[curRow + 1, curCol].visited)
+                if (inBounds(curRow + 1, curCol) && board_[curRow + 1, curCol].isSafe)
                 {
-                    commandLists += ((curRow + 1).ToString() + (curCol).ToString() + "@");
+                    commandLists += ((curRow + 1).ToString() + "," + (curCol).ToString() + SEPARATOR);
                     flood(board_[curRow + 1, curCol], dist++, commandLists);
                 }
 
-                if (inBounds(curRow, curCol - 1) && board_[curRow, curCol - 1].visited)
+                if (inBounds(curRow, curCol - 1) && board_[curRow, curCol - 1].isSafe)
                 {
-                    commandLists += ((curRow).ToString() + (curCol - 1).ToString() + "@");
+                    commandLists += ((curRow).ToString() + "," + (curCol - 1).ToString() + SEPARATOR);
                     flood(board_[curRow, curCol - 1], dist++, commandLists);
                 }
 
-                if (inBounds(curRow, curCol + 1) && board_[curRow, curCol + 1].visited)
+                if (inBounds(curRow, curCol + 1) && board_[curRow, curCol + 1].isSafe)
                 {
-                    commandLists += ((curRow).ToString() + (curCol + 1).ToString() + "@");
+                    commandLists += ((curRow).ToString() + "," + (curCol + 1).ToString() + SEPARATOR);
                     flood(board_[curRow, curCol + 1], dist++, commandLists);
                 }
-            }
+             }
         }
 
         //[inputs] : node 1 = where you are, node 2 = where you want to go

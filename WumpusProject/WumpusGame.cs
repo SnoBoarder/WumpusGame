@@ -98,6 +98,9 @@ namespace WumpusProject
             int col = Int32.Parse(choices[1]);
             string attributes = choices[2];
 
+            if (attributes == "")
+                return "No attributes were set at: (" + row + "," + col + ")\n";
+
             char[] attributeList = attributes.ToCharArray();
 
             int len = attributeList.Length;
@@ -217,6 +220,9 @@ namespace WumpusProject
                 currentNode = playerMap[currRow, currCol];
                 currentNode.updateFromPerfectNode(perfectMap[currRow, currCol]);
 
+                // update the distance function's board
+                tool_.updateBoard(playerMap);
+
                 // Get updated goals
                 tryToAddToGoals(currRow - 1, currCol); // try adding UP
                 tryToAddToGoals(currRow, currCol - 1); // try adding LEFT
@@ -259,11 +265,11 @@ namespace WumpusProject
                     // if goal is next to current goal
                     if (getDirection(currentNode, goalNode) != Direction.NONE)
                     { // set the command and then continue
-                        _commands.Add(new Command(goalNode.row, goalNode.col));
+                        addCommand(goalNode.row, goalNode.col);
                     }
                     else
                     { // otherwise calculate the shortest visited path to the goal and populate the command list
-                        throw new Exception("IMPLEMENT SHORTEST VISITED PATH METHOD");
+                        populateCommandList(tool_.distTo(currentNode, goalNode));
                     }
 
                     // set current row and current column
@@ -273,6 +279,11 @@ namespace WumpusProject
             }
 
             // TODO: Display commands here!
+        }
+
+        private void addCommand(int row, int col)
+        {
+            _commands.Add(new Command(row, col));
         }
 
         private void tryToAddToGoals(int row, int col)
@@ -312,6 +323,24 @@ namespace WumpusProject
                 return Direction.RIGHT;
 
             return Direction.NONE;
+        }
+
+        private void populateCommandList(string cmdStr)
+        {
+            string[] cmdList = cmdStr.Split(Distance.SEPARATOR);
+
+            string[] pos;
+
+            int len = cmdList.Length;
+            for (int i = 0; i < len; ++i)
+            {
+                pos = cmdList[i].Split(',');
+
+                if (cmdList.Length != 2)
+                    throw new Exception("Invalid command");
+
+                addCommand(Convert.ToInt32(cmdList[0]), Convert.ToInt32(cmdList[1]));
+            }
         }
     }
 }

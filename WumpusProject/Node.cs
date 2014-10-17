@@ -129,7 +129,7 @@ namespace WumpusProject
                 }
             }
 
-            if (neighborCount == 1)
+            if (stenchCount == 1 && neighborCount == 1)
             { // i am the only neighbor with stench
                 _wumpusState = WumpusState.POTENTIAL_WUMPUS;
 
@@ -208,6 +208,9 @@ namespace WumpusProject
                 {
                     if (!isAdjacent(row, col))
                         continue;
+
+                    if (WumpusGame.playerMap[row, col].visited)
+                        continue; // we've already visisted this... ignore
 
                     switch (type)
                     {

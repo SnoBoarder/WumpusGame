@@ -10,6 +10,9 @@ namespace WumpusProject
         public delegate void HandleSafetyWumpusCheck(Node node);
         public static event HandleSafetyWumpusCheck OnSafetyWumpusCheck;
 
+        public delegate void HandleGoldFound();
+        public static event HandleGoldFound OnGoldFound;
+
         private enum PitState { UNKNOWN, POTENTIAL_PIT, NO_PIT, PIT_HERE };
         private enum WumpusState { UNKNOWN, POTENTIAL_WUMPUS, NO_WUMPUS, WUMPUS_HERE };
         private enum UpdateType { NO_PIT, NO_WUMPUS, POTENTIAL_PIT, POTENTIAL_WUMPUS };
@@ -209,7 +212,11 @@ namespace WumpusProject
 
             if (_perfectNode.hasGold)
             { // WE GOT GOLD
+                Console.WriteLine("Gold found at " + _row + ", " + _col);
                 WumpusGame.goldFound = true;
+
+                if (OnGoldFound != null)
+                    OnGoldFound();
             }
 
             // since we have visited this location, we know that there is no pit and no wumpus

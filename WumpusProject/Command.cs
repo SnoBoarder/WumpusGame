@@ -36,21 +36,21 @@ namespace WumpusProject
         {
             get
             {
-                string str = "Moving to " + _row + ", " + _col;
+                string str = "Move to " + _row + ", " + _col;
 
                 switch (_shootArrow)
                 {
                     case WumpusGame.Direction.DOWN:
-                        str += " and shooting arrow DOWN";
+                        str += " and shoot arrow DOWN";
                         break;
                     case WumpusGame.Direction.LEFT:
-                        str += " and shooting arrow LEFT";
+                        str += " and shoot arrow LEFT";
                         break;
                     case WumpusGame.Direction.RIGHT:
-                        str += " and shooting arrow RIGHT";
+                        str += " and shoot arrow RIGHT";
                         break;
                     case WumpusGame.Direction.UP:
-                        str += " and shooting arrow UP";
+                        str += " and shoot arrow UP";
                         break;
                 }
 

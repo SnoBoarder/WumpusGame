@@ -23,6 +23,7 @@ namespace WumpusProject
 
         public static bool goldFound = false;
         public static bool wumpusKilled = false;
+        public static bool goHome = false;
 
         public static int totalRows;
         public static int totalCols;
@@ -43,6 +44,7 @@ namespace WumpusProject
             // reset static variables
             wumpusKilled = false;
             goldFound = false;
+            goHome = false;
 
             tool_ = new Distance();
             
@@ -56,6 +58,7 @@ namespace WumpusProject
 
             Node.OnSafetyPitCheck += checkPitSafety;
             Node.OnSafetyWumpusCheck += checkWumpusSafety;
+            Node.OnGoldFound += setGoHome;
         }
 
         #region SetupRegion
@@ -203,6 +206,13 @@ namespace WumpusProject
             }
         }
 
+        private void setGoHome()
+        {
+            // since top and only priority is to find the gold, go home once we find the gold.
+            if (goldFound && !goHome)
+                goHome = true;
+        }
+
         public void run()
         {
             _runningSetup = false;
@@ -234,6 +244,17 @@ namespace WumpusProject
                 currentNode = playerMap[currRow, currCol];
                 currentNode.updateFromPerfectNode(perfectMap[currRow, currCol]);
 
+                if (goHome)
+                { // we've found the gold! go home!
+                    tool_.updateBoard(playerMap);
+
+                    // find shortest path from current location to the entrance and store the commands
+                    populateCommandList(tool_.distTo(currentNode, playerMap[_startRow, _startCol]));
+
+                    // we're done with the algorithm so break out
+                    break;
+                }
+
                 cleanupGoals();
 
                 // Get updated goals
@@ -245,11 +266,8 @@ namespace WumpusProject
                 // Handle goal
                 if (_goals.Count == 0)
                 { // WE HAVE NO GOALS
-                    if (_wumpusRow != -1 && _wumpusCol != -1)
+                    if (!wumpusKilled && _wumpusRow != -1 && _wumpusCol != -1)
                     { // we know where the wumpus is! KILL IT
-
-                        if (wumpusKilled)
-                            throw new Exception("WUMPUS ALREADY KILLED. WTF.");
 
                         // Step 1: find shortest path to kill the wumpus (populate the commands)
                         currentNode = killWumpus(currentNode); // populates command and makes final command kill the wumpus. make it the current node
@@ -269,6 +287,10 @@ namespace WumpusProject
                         }
                         else
                         { // Step 3: if goldFound is true, GO HOME
+                            
+                            // NOTE: Since we are now handling goHome as soon as we find gold, this condition should never occur
+                            throw new Exception("Gold has already been found. We should've left already. How are we here?");
+
                             // update the distance function's board
                             tool_.updateBoard(playerMap);
 
@@ -280,7 +302,7 @@ namespace WumpusProject
                         }
                     }
                     else
-                    { // we don't know where the wumpus is!
+                    { // we've already killed the wumpus OR we don't know where the wumpus is!
                         // GO HOME! WE GIVE UP!
                         // update the distance function's board
                         tool_.updateBoard(playerMap);
@@ -327,7 +349,7 @@ namespace WumpusProject
 
         private void addCommand(int row, int col)
         {
-            Console.WriteLine("Command: " + row + ", " + col);
+            //Console.WriteLine("Command: " + row + ", " + col);
             _commands.Add(new Command(row, col));
         }
 

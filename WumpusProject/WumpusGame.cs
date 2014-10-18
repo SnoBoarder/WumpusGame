@@ -167,7 +167,12 @@ namespace WumpusProject
         public static void setWumpusPosition(int row, int col)
         {
             if (_wumpusRow != -1 || _wumpusCol != -1)
-                throw new Exception("Wumpus position has already been set!");
+            {
+                if (_wumpusRow != row || _wumpusCol != col)
+                    throw new Exception("Wumpus position is differing!");
+
+                return; // same wumpus position has been set. ignore.
+            }
 
             _wumpusRow = row;
             _wumpusCol = col;

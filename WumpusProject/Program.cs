@@ -11,7 +11,7 @@ namespace WumpusProject
         static void Main(string[] args)
         {
             List<string> _test = new List<string>();
-            //populateTest(test);
+            //populateTest(_test);
 
             string _choice = "";
 
@@ -35,8 +35,8 @@ namespace WumpusProject
                 { // run test!
                     
                     // make board and get board
-                    _boardCreation.makeBoard(5, 5);
-                    _test = _boardCreation.getBoard();
+                    //_boardCreation.makeBoard(5, 5);
+                    //_test = _boardCreation.getBoard();
 
                     // TODO: Uncomment this section to test the _boardCreation part commented out above
                     populateTest(_test);

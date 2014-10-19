@@ -59,6 +59,7 @@ namespace WumpusProject
                 creationBoard_ = new bool[rows, cols];
                 dists_ = new int[rows, cols];
                 pits.Clear();
+                safePlaces.Clear();
 
                 for (int x = 0; x < rows; x++)
                 {
@@ -168,7 +169,7 @@ namespace WumpusProject
 
             }
 
-
+            
             //go through all and place attributes
             for (int x = 0; x < rows; x++)
             {
@@ -225,6 +226,9 @@ namespace WumpusProject
                     index++;
                 }
             }
+
+            //add in board size
+            commandList_.Insert(0, rows.ToString() + "," + cols.ToString());
         }
 
         public List<string> getBoard()

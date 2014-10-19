@@ -39,6 +39,7 @@ namespace WumpusProject
             int wumpR = 0;
             int wumpC = 0;
             List<int[]> pits = new List<int[]>();
+            List<int[]> safePlaces = new List<int[]>();
 
             int goldR = 0;
             int goldC = 0;
@@ -64,11 +65,17 @@ namespace WumpusProject
                     for (int y = 0; y < cols; y++)
                     {
                         //everything starts off as safe and as bad stuff goes in, we remove it.
+                        int[] safeLoc = new int[2];
+                        safeLoc[0] = x;
+                        safeLoc[1] = y;
+
+                        safePlaces.Add(safeLoc);
+
                         creationBoard_[x, y] = true;
                     }
                 }
-                row = rnd.Next(1);
-                col = rnd.Next(1);
+                row = rnd.Next(2);
+                col = rnd.Next(2);
 
                 //get a random corner to start
                 startR = (row == 0) ? 0 : rows - 1;
@@ -78,13 +85,22 @@ namespace WumpusProject
 
                 while (!goldPlaced)
                 {
-                    goldR = rnd.Next(0, rows - 1);
-                    goldC = rnd.Next(0, cols - 1);
+                    int ind = rnd.Next(0, safePlaces.Count);
+
+                    goldR = safePlaces[ind][0];
+                    goldC = safePlaces[ind][1];
 
                     if (Math.Abs(goldR - startR) > 1 && Math.Abs(goldC - startC) > 1)
                     {
                         //if the gold is at least 2 squares away from the player. valid.
                         goldPlaced = true;
+                        safePlaces.RemoveAt(ind);
+                    }
+                    else
+                    {
+                        //if it is too near the start, nothing else will fall here anyways.
+                        //take it out of the possible safe places that can change.
+                        safePlaces.RemoveAt(ind);
                     }
                 }
 
@@ -92,29 +108,31 @@ namespace WumpusProject
                 wumpusPlaced = false;
                 while (!wumpusPlaced)
                 {
-                    row = rnd.Next(0, rows - 1);
-                    col = rnd.Next(0, cols - 1);
+                    int ind = rnd.Next(0, safePlaces.Count);
+                    wumpR = safePlaces[ind][0];
+                    wumpC = safePlaces[ind][1];
 
-                    if (Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1 && Math.Abs(goldR - row) > 0 && Math.Abs(goldC - col) > 0)
+                    if (Math.Abs(wumpR - startR) > 1 && Math.Abs(wumpC - startC) > 1 && Math.Abs(goldR - wumpR) > 0 && Math.Abs(goldC - wumpC) > 0)
                     {
                         wumpusPlaced = true;
                         creationBoard_[row, col] = false;
-                        wumpR = row;
-                        wumpC = col;
+                        safePlaces.RemoveAt(ind);
                     }
                 }
 
                 pitsPlaced = 0;
                 while (pitsPlaced < numPits)
                 {
-                    row = rnd.Next(0, rows - 1);
-                    col = rnd.Next(0, cols - 1);
+                    int ind = rnd.Next(0, safePlaces.Count);
+                    row = safePlaces[ind][0];
+                    col = safePlaces[ind][1];
 
                     if (creationBoard_[row, col] && row != goldR && col != goldC
                         && Math.Abs(row - startR) > 1 && Math.Abs(col - startC) > 1)
                     {
                         //if it is a safe spot, there is no gold, and not a starting area. We are good to go
                         creationBoard_[row, col] = false;
+                        safePlaces.RemoveAt(ind);
 
                         pitLoc = new int[2];
                         pitLoc[0] = row;
@@ -122,9 +140,23 @@ namespace WumpusProject
                         pits.Add(pitLoc);
                         pitsPlaced++;
                     }
+
+                    else
+                    {
+                        //this is safe place that cannot hold a pit, remove it from the list
+                        safePlaces.RemoveAt(ind);
+                    }
+
+                    if(safePlaces.Count == 0)
+                    {
+                        //the current board set up doesn't let us place any more pits
+                        //break out and go with the board we have so far. 
+                        break;
+                    }
                 }
 
                 //now make sure there is a solution
+                clearDist();
                 flood(startR, startC, 0);
 
                 if (dists_[goldR, goldC] != -1)
@@ -134,7 +166,6 @@ namespace WumpusProject
                     break;
                 }
 
-                clearDist();
             }
 
 
@@ -162,6 +193,10 @@ namespace WumpusProject
                     commandList_.Add(x.ToString() + "," + y.ToString() + "," + atts);
                 }
             }
+
+            //add start location
+            commandList_[startR * cols + startC] += "E";
+
             //add wumpus location
             commandList_[wumpR * cols + wumpC] += "W";
 

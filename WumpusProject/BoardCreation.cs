@@ -177,14 +177,14 @@ namespace WumpusProject
                 {
                     string atts = "";
 
-                    if (Math.Abs(wumpC - y) == 1 || Math.Abs(wumpR - x) == 1)
+                    if ((Math.Abs(wumpC - y) == 1 && Math.Abs(wumpR - x) == 0) || (Math.Abs(wumpC - y) == 0 && Math.Abs(wumpR - x) == 1))
                     {
                         atts += "S";
                     }
 
                     for (int z = 0; z < pits.Count; z++)
                     {
-                        if (Math.Abs(pits[z][0] - x) == 1 || Math.Abs(pits[z][1] - y) == 1)
+                        if ((Math.Abs(pits[z][0] - x) == 0 && Math.Abs(pits[z][1] - y) == 1) || (Math.Abs(pits[z][0] - x) == 1 && Math.Abs(pits[z][1] - y) == 0))
                         {
                             atts += "B";
                             break;

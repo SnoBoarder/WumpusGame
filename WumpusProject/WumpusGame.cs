@@ -211,11 +211,26 @@ namespace WumpusProject
             }
         }
 
-        private void setGoHome()
+        private void setGoHome(int row, int col)
         {
             // since top and only priority is to find the gold, go home once we find the gold.
             if (goldFound && !goHome)
+            {
                 goHome = true;
+
+                // get the last command in the list. make sure it's the correct command to where the gold is and set it.
+                Command cmd = _commands[_commands.Count - 1];
+                for (int i = _commands.Count - 1; i >= 0; --i)
+                {
+                    // traverse the commands backwards and find the correct row col for where the gold was found. set the command to have the gold found marker
+                    cmd = _commands[_commands.Count - 1];
+                    if (cmd.row == row || cmd.col == col)
+                    {
+                        cmd.goldFoundHere = true;
+                        break;
+                    }
+                }
+            }
         }
 
         public void run()
@@ -344,12 +359,45 @@ namespace WumpusProject
                 }
             }
 
-            // TODO: Display commands here!
+            Direction currentDirection = Direction.DOWN; // make the character initially look down
+            Command prevCommand = null;
+            Command nextCommand = null;
             int len = _commands.Count;
             for (int i = 0; i < len; ++i)
             {
+                
+                // TODO: Move this line to an appropriate place when we have directions. For now keeping this year so we can see the output.
                 Console.WriteLine(_commands[i].output);
+
+                nextCommand = _commands[i];
+
+                if (prevCommand != null)
+                {
+                    // display additional "actions" here (in this case, TURNS)
+
+                    // use current direction to figure out what turns are needed
+
+                    Direction newDirection = getDirection(prevCommand.row, prevCommand.col, nextCommand.row, nextCommand.col);
+                    switch (newDirection)
+                    {
+                        case Direction.UP:
+                            break;
+                        case Direction.LEFT:
+                            break;
+                        case Direction.DOWN:
+                            break;
+                        case Direction.RIGHT:
+                            break;
+                    }
+
+                    currentDirection = newDirection;
+                }
+
+                prevCommand = nextCommand;
             }
+
+            // state whether the gold was found or not.
+            Console.WriteLine(goldFound ? "Gold was found!" : "Gold was NOT found!");
         }
 
         private void addCommand(int row, int col)
@@ -378,6 +426,11 @@ namespace WumpusProject
                 _goals.Remove(node); // remove from the list to then add it to the end
 
             _goals.Add(node); // add to the end of the list
+        }
+
+        private Direction getDirection(int fromRow, int fromCol, int toRow, int toCol)
+        {
+            return getDirection(playerMap[fromRow, fromCol], playerMap[toRow, toCol]);
         }
 
         private Direction getDirection(Node fromNode, Node toNode)
@@ -448,19 +501,28 @@ namespace WumpusProject
             // update the distance function's board
             tool_.updateBoard(playerMap);
 
-            string[] nearestRow = null;
+            Node potentialNode;
 
-            Node potentialNode = playerMap[_wumpusRow, currentNode.col];
-            if (potentialNode.visited)
-            { // we've visited the node that is in the same row as the wumpus. get it's distance
-                nearestRow = tool_.distTo(currentNode, potentialNode).Split(Distance.SEPARATOR);
+            string[] nearestRow = null;
+            for (int i = 0; i < totalRows; ++i)
+            {
+                potentialNode = playerMap[_wumpusRow, i];
+                if (potentialNode.visited)
+                { // we've visited a node that is in the same row as the wumpus. get it's distance
+                    nearestRow = tool_.distTo(currentNode, potentialNode).Split(Distance.SEPARATOR);
+                    break;
+                }
             }
 
             string[] nearestCol = null;
-            potentialNode = playerMap[currentNode.row, _wumpusCol];
-            if (potentialNode.visited)
+            for (int i = 0; i < totalCols; ++i)
             {
-                nearestCol = tool_.distTo(currentNode, potentialNode).Split(Distance.SEPARATOR);
+                potentialNode = playerMap[i, _wumpusCol];
+                if (potentialNode.visited)
+                { // we've visited the node that is in the same row as the wumpus. get it's distance
+                    nearestCol = tool_.distTo(currentNode, potentialNode).Split(Distance.SEPARATOR);
+                    break;
+                }
             }
 
             string[] shortestDist;

@@ -7,6 +7,7 @@ namespace WumpusProject
     public class WumpusGame
     {
         public enum Direction { NONE, UP, LEFT, DOWN, RIGHT };
+        public enum Turn { NONE, LEFT, RIGHT, UTURN };
 
         private const string START_LOCATION = "E";
         private const string BREEZY = "B";
@@ -374,42 +375,15 @@ namespace WumpusProject
                 if (prevCommand != null)
                 {
                     // display additional "actions" here (in this case, TURNS)
-
-                    if (nextCommand.col - prevCommand.col < 0) // go left
-                    {
-                        currentDirection = Direction.LEFT;
-                    }
-                    else if (nextCommand.col - prevCommand.col > 0) // go right
-                    {
-                        currentDirection = Direction.RIGHT;
-                    } 
-                    else if(nextCommand.row - prevCommand.row < 0) // go up
-                    {
-                        currentDirection = Direction.UP;
-                    }
-                    else if(nextCommand.row - prevCommand.row > 0) // go down
-                    {
-                        currentDirection = Direction.DOWN;
-                    }
-
                     // use current direction to figure out what turns are needed
 
-                    // Direction newDirection = getDirection(prevCommand.row, prevCommand.col, nextCommand.row, nextCommand.col);
-                    // switch (newDirection)
-                    // {
-                    //  case Direction.UP:
-                    //      break;
-                    //  case Direction.LEFT:
-                    //      break;
-                    //  case Direction.DOWN:
-                    //      break;
-                    //  case Direction.RIGHT:
-                    //      break;
-                    // }
+                    Direction newDirection = getDirection(prevCommand.row, prevCommand.col, nextCommand.row, nextCommand.col);
+                    Turn turn = getTurn(currentDirection, newDirection);
 
-                    // currentDirection = newDirection;
+                    currentDirection = newDirection;
 
                     nextCommand.playerDirection = currentDirection;
+                    nextCommand.playerTurn = turn;
                 }
 
                 prevCommand = nextCommand;
@@ -469,6 +443,29 @@ namespace WumpusProject
                 return Direction.RIGHT;
 
             return Direction.NONE;
+        }
+
+        private Turn getTurn(Direction currentDirection, Direction newDirection)
+        {
+            if(currentDirection == Direction.UP && newDirection == Direction.DOWN || currentDirection == Direction.DOWN && newDirection == Direction.UP 
+                        || currentDirection == Direction.LEFT && newDirection == Direction.RIGHT || currentDirection == Direction.RIGHT && newDirection == Direction.LEFT)
+            {
+                return Turn.UTURN;
+            }
+
+            if (currentDirection == Direction.UP && newDirection == Direction.RIGHT || currentDirection == Direction.RIGHT && newDirection == Direction.DOWN 
+                        || currentDirection == Direction.DOWN && newDirection == Direction.LEFT || currentDirection == Direction.LEFT && newDirection == Direction.UP)
+            {
+                return Turn.RIGHT;
+            }
+
+            if (currentDirection == Direction.UP && newDirection == Direction.LEFT || currentDirection == Direction.LEFT && newDirection == Direction.DOWN
+                        || currentDirection == Direction.DOWN && newDirection == Direction.RIGHT || currentDirection == Direction.RIGHT && newDirection == Direction.UP)
+            {
+                return Turn.LEFT;
+            }
+
+            return Turn.NONE;
         }
 
         private void populateCommandList(string cmdStr)

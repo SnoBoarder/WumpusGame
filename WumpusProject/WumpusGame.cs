@@ -367,7 +367,7 @@ namespace WumpusProject
             {
                 
                 // TODO: Move this line to an appropriate place when we have directions. For now keeping this year so we can see the output.
-                Console.WriteLine(_commands[i].output);
+                // Console.WriteLine(_commands[i].output);
 
                 nextCommand = _commands[i];
 
@@ -375,25 +375,46 @@ namespace WumpusProject
                 {
                     // display additional "actions" here (in this case, TURNS)
 
-                    // use current direction to figure out what turns are needed
-
-                    Direction newDirection = getDirection(prevCommand.row, prevCommand.col, nextCommand.row, nextCommand.col);
-                    switch (newDirection)
+                    if (nextCommand.col - prevCommand.col < 0) // go left
                     {
-                        case Direction.UP:
-                            break;
-                        case Direction.LEFT:
-                            break;
-                        case Direction.DOWN:
-                            break;
-                        case Direction.RIGHT:
-                            break;
+                        currentDirection = Direction.LEFT;
+                    }
+                    else if (nextCommand.col - prevCommand.col > 0) // go right
+                    {
+                        currentDirection = Direction.RIGHT;
+                    } 
+                    else if(nextCommand.row - prevCommand.row < 0) // go up
+                    {
+                        currentDirection = Direction.UP;
+                    }
+                    else if(nextCommand.row - prevCommand.row > 0) // go down
+                    {
+                        currentDirection = Direction.DOWN;
                     }
 
-                    currentDirection = newDirection;
+                    // use current direction to figure out what turns are needed
+
+                    // Direction newDirection = getDirection(prevCommand.row, prevCommand.col, nextCommand.row, nextCommand.col);
+                    // switch (newDirection)
+                    // {
+                    //  case Direction.UP:
+                    //      break;
+                    //  case Direction.LEFT:
+                    //      break;
+                    //  case Direction.DOWN:
+                    //      break;
+                    //  case Direction.RIGHT:
+                    //      break;
+                    // }
+
+                    // currentDirection = newDirection;
+
+                    nextCommand.playerDirection = currentDirection;
                 }
 
                 prevCommand = nextCommand;
+
+                Console.WriteLine(_commands[i].output);
             }
 
             // state whether the gold was found or not.
